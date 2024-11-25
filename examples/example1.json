@@ -1,0 +1,42 @@
+{
+  "id": "building1",
+  "name": "Main Office",
+  "levels": [
+    {
+      "id": "level1",
+      "name": "Ground Floor",
+      "rooms": [
+        {
+          "id": "room1",
+          "name": "Conference Room",
+          "area": 50.0,
+          "cube": 150.0,
+          "heating": 20.5,
+          "light": 300.0
+        },
+        {
+          "id": "room2",
+          "name": "Office 101",
+          "area": 30.0,
+          "cube": 90.0,
+          "heating": 15.0,
+          "light": 200.0
+        }
+      ]
+    },
+    {
+      "id": "level2",
+      "name": "First Floor",
+      "rooms": [
+        {
+          "id": "room3",
+          "name": "Office 201",
+          "area": 25.0,
+          "cube": 75.0,
+          "heating": 10.0,
+          "light": 150.0
+        }
+      ]
+    }
+  ]
+}

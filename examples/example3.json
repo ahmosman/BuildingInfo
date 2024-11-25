@@ -1,0 +1,50 @@
+{
+  "id": "building3",
+  "name": "Innovation Center",
+  "levels": [
+    {
+      "id": "level1",
+      "name": "Ground Floor",
+      "rooms": [
+        {
+          "id": "room1",
+          "name": "Reception",
+          "area": 60.0,
+          "cube": 180.0,
+          "heating": 22.0,
+          "light": 350.0
+        },
+        {
+          "id": "room2",
+          "name": "Break Room",
+          "area": 45.0,
+          "cube": 135.0,
+          "heating": 18.0,
+          "light": 250.0
+        }
+      ]
+    },
+    {
+      "id": "level2",
+      "name": "Second Floor",
+      "rooms": [
+        {
+          "id": "room3",
+          "name": "Lab 1",
+          "area": 70.0,
+          "cube": 210.0,
+          "heating": 28.0,
+          "light": 400.0
+        },
+        {
+          "id": "room4",
+          "name": "Lab 2",
+          "area": 70.0,
+          "cube": 210.0,
+          "heating": 28.0,
+          "light": 400.0
+        }
+      ]
+    }
+  ]
+}
