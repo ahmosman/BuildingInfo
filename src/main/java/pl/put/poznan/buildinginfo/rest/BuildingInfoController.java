@@ -72,8 +72,107 @@ public class BuildingInfoController {
         }
     }
 
+    @RequestMapping(value = "/roomArea/{roomId}", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> roomArea(@PathVariable("roomId") String roomId, @RequestBody String buildingJson) {
+        try {
+            // Parsing the building JSON
+            Building building = BuildingParser.parseJson(buildingJson);
 
+            // Searching for the room with the given ID
+            Optional<Room> roomOptional = building.getLevels().stream()
+                    .flatMap(level -> level.getRooms().stream()) // Get all rooms from the levels
+                    .filter(room -> room.getId().equals(roomId))  // Filter by room ID
+                    .findFirst();                                // Get the first matching room (if any)
 
+            // If the room is found
+            if (roomOptional.isPresent()) {
+                Room room = roomOptional.get();
+                double roomArea = room.getArea(); // Get the area of the room
+
+                // Rounding the result to two decimal places
+                roomArea = Math.round(roomArea * 100.0) / 100.0;
+
+                // Preparing the response
+                Map<String, Object> response = new HashMap<>();
+                response.put("roomArea", roomArea);
+
+                return response; // The map will be automatically converted to JSON
+            } else {
+                // If the room with the given ID does not exist
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Room not found");
+                return errorResponse;
+            }
+
+        } catch (Exception e) {
+            logger.error("Error processing roomArea", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to process roomArea");
+            return errorResponse;
+        }
+    }
+
+    @RequestMapping(value = "/levelArea", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> levelArea(@RequestBody String buildingJson) {
+        try {
+            // Parsing the building JSON
+            Building building = BuildingParser.parseJson(buildingJson);
+
+            // Calculating the total area for each level
+            Map<String, Double> levelArea = building.getLevels().stream()
+                    .collect(Collectors.toMap(
+                            Level::getId, // The key is the level ID
+                            level -> {
+                                // Summing up the areas of all rooms on the level
+                                double totalArea = level.getRooms().stream()
+                                        .mapToDouble(Room::getArea) // Get the area of each room
+                                        .sum();
+                                // Rounding to 2 decimal places
+                                return Math.round(totalArea * 100.0) / 100.0;
+                            }
+                    ));
+
+            // Preparing the response
+            Map<String, Object> response = new HashMap<>();
+            response.put("levelArea", levelArea);
+
+            return response;
+
+        } catch (Exception e) {
+            logger.error("Error processing levelArea", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate level area");
+            return errorResponse;
+        }
+    }
+
+    @RequestMapping(value = "/buildingArea", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> buildingArea(@RequestBody String buildingJson) {
+        try {
+            // Parsing the building JSON
+            Building building = BuildingParser.parseJson(buildingJson);
+
+            // Calculating the total area for the building
+            double totalBuildingArea = building.getLevels().stream()
+                    .mapToDouble(level -> level.getRooms().stream()
+                            .mapToDouble(Room::getArea) // Get the area of each room in the level
+                            .sum())
+                    .sum();
+
+            // Rounding the total building area to 2 decimal places
+            totalBuildingArea = Math.round(totalBuildingArea * 100.0) / 100.0;
+
+            // Preparing the response
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalBuildingArea", totalBuildingArea);
+
+            return response;
+
+        } catch (Exception e) {
+            logger.error("Error processing buildingArea", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate building area");
+            return errorResponse;
+        }
+    }
 }
-
-
