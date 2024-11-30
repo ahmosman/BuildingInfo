@@ -1,0 +1,6 @@
+pl\put\poznan\buildinginfo\logic\entities\Level.class
+pl\put\poznan\buildinginfo\app\BuildingInfoApplication.class
+pl\put\poznan\buildinginfo\logic\entities\Room.class
+pl\put\poznan\buildinginfo\logic\entities\Building.class
+pl\put\poznan\buildinginfo\rest\BuildingInfoController.class
+pl\put\poznan\buildinginfo\logic\BuildingParser.class
