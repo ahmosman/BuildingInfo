@@ -1,3 +1,6 @@
-/Users/mochodek/Documents/Dydaktyka/Wyklady/IO/Laboratory classes/projekt/ioprojectarchitecture/src/main/java/pl/put/poznan/transformer/app/TextTransformerApplication.java
-/Users/mochodek/Documents/Dydaktyka/Wyklady/IO/Laboratory classes/projekt/ioprojectarchitecture/src/main/java/pl/put/poznan/transformer/logic/TextTransformer.java
-/Users/mochodek/Documents/Dydaktyka/Wyklady/IO/Laboratory classes/projekt/ioprojectarchitecture/src/main/java/pl/put/poznan/transformer/rest/TextTransformerController.java
+C:\Users\Maciek\OneDrive\Studia\Inżyniera oprogramowania\BuildingInfo-IO\src\main\java\pl\put\poznan\buildinginfo\rest\BuildingInfoController.java
+C:\Users\Maciek\OneDrive\Studia\Inżyniera oprogramowania\BuildingInfo-IO\src\main\java\pl\put\poznan\buildinginfo\logic\entities\Level.java
+C:\Users\Maciek\OneDrive\Studia\Inżyniera oprogramowania\BuildingInfo-IO\src\main\java\pl\put\poznan\buildinginfo\logic\entities\Room.java
+C:\Users\Maciek\OneDrive\Studia\Inżyniera oprogramowania\BuildingInfo-IO\src\main\java\pl\put\poznan\buildinginfo\logic\entities\Building.java
+C:\Users\Maciek\OneDrive\Studia\Inżyniera oprogramowania\BuildingInfo-IO\src\main\java\pl\put\poznan\buildinginfo\app\BuildingInfoApplication.java
+C:\Users\Maciek\OneDrive\Studia\Inżyniera oprogramowania\BuildingInfo-IO\src\main\java\pl\put\poznan\buildinginfo\logic\BuildingParser.java
