@@ -13,11 +13,27 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+/**
+ * Kontroler REST zapewniający funkcjonalności do analizy danych dotyczących budynków.
+ * Obsługuje żądania HTTP do parsowania danych JSON opisujących budynki
+ * oraz wykonywania operacji analitycznych, takich jak obliczanie powierzchni czy analiza ogrzewania.
+ *
+ * @author Sławek,Dawid,Maciej,Ahmed
+ * @version 1.0
+ * @since 2024-12-03
+ */
 @RestController
 public class BuildingInfoController {
 
     private static final Logger logger = LoggerFactory.getLogger(BuildingInfoController.class);
 
+    /**
+     * Parsuje dane JSON opisujące budynek i zwraca jego reprezentację w postaci tekstowej.
+     *
+     * @param buildingJson dane budynku w formacie JSON
+     * @return reprezentacja tekstowa obiektu {@link Building} lub komunikat błędu
+     */
     @RequestMapping(path = "/info", method = RequestMethod.POST, produces = "application/json")
     public String getInfo(@RequestBody String buildingJson) {
         try {
@@ -32,6 +48,15 @@ public class BuildingInfoController {
             return "{\"error\":\"Failed to process building JSON\"}";
         }
     }
+
+
+    /**
+     * Zwraca pokoje o przekroczonym zużyciu ogrzewania na metr sześcienny.
+     *
+     * @param heatingThreshold próg zużycia ogrzewania na metr sześcienny
+     * @param buildingJson     dane budynku w formacie JSON
+     * @return lista pokoi przekraczających próg zużycia ogrzewania
+     */
 
     @RequestMapping(value = "/highRoomHeating/{heatingThreshold}", method = RequestMethod.POST, produces = "application/json")
     public List<Map<String, Object>> highRoomHeating(@PathVariable("heatingThreshold") double heatingThreshold, @RequestBody String buildingJson) {
@@ -72,6 +97,13 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Zwraca powierzchnię pokoju o podanym identyfikatorze.
+     *
+     * @param roomId       identyfikator pokoju
+     * @param buildingJson dane budynku w formacie JSON
+     * @return mapa zawierająca powierzchnię pokoju lub komunikat błędu
+     */
     @RequestMapping(value = "/roomArea/{roomId}", method = RequestMethod.POST, produces = "application/json")
     public Map<String, Object> roomArea(@PathVariable("roomId") String roomId, @RequestBody String buildingJson) {
         try {
@@ -112,6 +144,12 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Oblicza powierzchnię każdego poziomu budynku.
+     *
+     * @param buildingJson dane budynku w formacie JSON
+     * @return mapa zawierająca identyfikatory poziomów i ich powierzchnie
+     */
     @RequestMapping(value = "/levelArea", method = RequestMethod.POST, produces = "application/json")
     public Map<String, Object> levelArea(@RequestBody String buildingJson) {
         try {
@@ -176,7 +214,7 @@ public class BuildingInfoController {
         }
     }
 
-@RequestMapping(value = "/roomHeating/{roomId}", method = RequestMethod.POST, produces = "application/json")
+    @RequestMapping(value = "/roomHeating/{roomId}", method = RequestMethod.POST, produces = "application/json")
     public Map<String, Object> roomHeating(@PathVariable("roomId") String roomId, @RequestBody String buildingJson) {
         try {
             // Parsing the building JSON
@@ -217,8 +255,6 @@ public class BuildingInfoController {
     }
 
 
-
-
     @RequestMapping(value = "/roomHeatingPerLevel", method = RequestMethod.POST, produces = "application/json")
     public Map<String, Object> roomHeatingPerLevel(@RequestBody String buildingJson) {
         try {
@@ -257,8 +293,6 @@ public class BuildingInfoController {
             return errorResponse;
         }
     }
-
-
 
 
     @RequestMapping(value = "/roomHeatingPerBuilding", method = RequestMethod.POST, produces = "application/json")
