@@ -10,39 +10,48 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuildingParser {
+
+    // Metoda do parsowania JSON i tworzenia obiektu Building
     public static Building parseJson(String json) {
         JSONObject jsonObject = new JSONObject(json);
+        Building building = new Building(
+                jsonObject.getString("id"),
+                jsonObject.optString("name", null));  // Tworzymy obiekt Building
 
-        Building building = new Building();
-        building.setId(jsonObject.getString("id"));
-        building.setName(jsonObject.optString("name", null));
-
+        // Parsowanie poziomów
         JSONArray levelsArray = jsonObject.getJSONArray("levels");
         List<Level> levels = new ArrayList<>();
+
         for (int i = 0; i < levelsArray.length(); i++) {
             JSONObject levelObject = levelsArray.getJSONObject(i);
-            Level level = new Level();
-            level.setId(levelObject.getString("id"));
-            level.setName(levelObject.optString("name", null));
+            Level level = new Level(
+                    levelObject.getString("id"),
+                    levelObject.optString("name", null) );  // Tworzymy nowy poziom
 
+            // Parsowanie pokoi na poziomie
             JSONArray roomsArray = levelObject.getJSONArray("rooms");
             List<Room> rooms = new ArrayList<>();
             for (int j = 0; j < roomsArray.length(); j++) {
                 JSONObject roomObject = roomsArray.getJSONObject(j);
-                Room room = new Room();
-                room.setId(roomObject.getString("id"));
-                room.setName(roomObject.optString("name", null));
-                room.setArea(roomObject.getDouble("area"));
-                room.setCube(roomObject.getDouble("cube"));
-                room.setHeating((float) roomObject.getDouble("heating"));
-                room.setLight((float) roomObject.getDouble("light"));
-                rooms.add(room);
+                Room room = new Room(roomObject.getString("id"),
+                        roomObject.optString("name", null),
+                        roomObject.getDouble("area"),
+                        roomObject.getDouble("cube"),
+                        (float) roomObject.getDouble("heating"),
+                        (float) roomObject.getDouble("light")
+                );  // Tworzymy nowy pokój
+                rooms.add(room);  // Dodajemy pokój do listy pokoi
             }
+
+            // Dodajemy pokoje do poziomu
             level.setRooms(rooms);
-            levels.add(level);
+            // Dodajemy poziom do budynku (w formie BuildingComponent)
+            building.addComponent(level);
         }
+
+        // Dodajemy poziomy do budynku
         building.setLevels(levels);
 
-        return building;
+        return building;  // Zwracamy stworzony obiekt Building
     }
 }
