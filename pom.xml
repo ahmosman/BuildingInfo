@@ -64,9 +64,26 @@
             </plugin>
 
 
+            <!-- Wtyczka generowania Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <!-- Faza, w której Javadoc ma być generowany -->
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
 
         </plugins>
     </build>
+
 
     <repositories>
         <repository>
