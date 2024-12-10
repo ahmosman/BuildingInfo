@@ -62,8 +62,28 @@
                     <mainClass>pl.put.poznan.buildinginfo.app.BuildingInfoApplication</mainClass>
                 </configuration>
             </plugin>
+
+
+            <!-- plugin for generating Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <!-- Phase in which Javadoc is generating -->
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
         </plugins>
     </build>
+
 
     <repositories>
         <repository>
