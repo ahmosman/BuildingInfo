@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import pl.put.poznan.buildinginfo.logic.BuildingParser;
 import pl.put.poznan.buildinginfo.logic.entities.Building;
+import pl.put.poznan.buildinginfo.logic.entities.BuildingComponent;
 import pl.put.poznan.buildinginfo.logic.entities.Level;
 import pl.put.poznan.buildinginfo.logic.entities.Room;
 
@@ -13,27 +14,11 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-/**
- * Kontroler REST zapewniający funkcjonalności do analizy danych dotyczących budynków.
- * Obsługuje żądania HTTP do parsowania danych JSON opisujących budynki
- * oraz wykonywania operacji analitycznych, takich jak obliczanie powierzchni czy analiza ogrzewania.
- *
- * @author Sławek,Dawid,Maciej,Ahmed
- * @version 1.0
- * @since 2024-12-03
- */
 @RestController
 public class BuildingInfoController {
 
     private static final Logger logger = LoggerFactory.getLogger(BuildingInfoController.class);
 
-    /**
-     * Parsuje dane JSON opisujące budynek i zwraca jego reprezentację w postaci tekstowej.
-     *
-     * @param buildingJson dane budynku w formacie JSON
-     * @return reprezentacja tekstowa obiektu {@link Building} lub komunikat błędu
-     */
     @RequestMapping(path = "/info", method = RequestMethod.POST, produces = "application/json")
     public String getInfo(@RequestBody String buildingJson) {
         try {
@@ -49,288 +34,156 @@ public class BuildingInfoController {
         }
     }
 
-
-    /**
-     * Zwraca pokoje o przekroczonym zużyciu ogrzewania na metr sześcienny.
-     *
-     * @param heatingThreshold próg zużycia ogrzewania na metr sześcienny
-     * @param buildingJson     dane budynku w formacie JSON
-     * @return lista pokoi przekraczających próg zużycia ogrzewania
-     */
-
-    @RequestMapping(value = "/highRoomHeating/{heatingThreshold}", method = RequestMethod.POST, produces = "application/json")
-    public List<Map<String, Object>> highRoomHeating(@PathVariable("heatingThreshold") double heatingThreshold, @RequestBody String buildingJson) {
+    @RequestMapping(value = "/calculateArea", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateArea(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
-            // Parse the building JSON input to create a Building object
+            // Parsowanie JSON budynku
             Building building = BuildingParser.parseJson(buildingJson);
 
-            // List to store rooms that exceed the heating threshold
-            List<Map<String, Object>> highHeatingRooms = new ArrayList<>();
+            double totalArea = 0.0;
 
-            // Iterate through all levels of the building
-            for (Level level : building.getLevels()) {
-                // Iterate through all rooms on the current level
-                for (Room room : level.getRooms()) {
-                    // Calculate heating consumption per cubic meter for the room
-                    double heatingPerCube = room.getCube() > 0 ? room.getHeating() / room.getCube() : 0.0;
+            if (name != null && !name.isEmpty()) {
+                // Przeszukiwanie hierarchii w poszukiwaniu komponentu z dopasowanym name
+                Optional<BuildingComponent> foundComponent = findComponentByName(building, name);
 
-                    // Check if the calculated value exceeds the specified threshold
-                    if (heatingPerCube > heatingThreshold) {
-                        // Prepare details of the room that exceeds the threshold
-                        Map<String, Object> roomDetails = new HashMap<>();
-                        roomDetails.put("roomId", room.getId());
-                        roomDetails.put("heatingPerCube", Math.round(heatingPerCube * 100.0) / 100.0);
-
-                        // Add the room details to the result list
-                        highHeatingRooms.add(roomDetails);
-                    }
+                if (foundComponent.isPresent()) {
+                    // Obliczamy powierzchnię dla znalezionego komponentu
+                    totalArea = foundComponent.get().calculateArea();
+                } else {
+                    // Jeśli komponent o danym name nie został znaleziony, zgłaszamy błąd
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("error", "Component with given name not found");
+                    return errorResponse;
                 }
+            } else {
+                // Jeśli nie podano name, obliczamy powierzchnię całego budynku
+                totalArea = building.calculateArea();
             }
 
-            // Return the list of rooms exceeding the heating threshold
-            return highHeatingRooms;
+            // Zaokrąglamy wynik do dwóch miejsc po przecinku
+            totalArea = Math.round(totalArea * 100.0) / 100.0;
+
+            // Przygotowanie odpowiedzi
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalArea", totalArea);
+            return response;
 
         } catch (Exception e) {
-            // Log the error and return an empty list if an exception occurs
-            logger.error("Error processing highRoomHeating", e);
-            return Collections.emptyList();
+            logger.error("Error processing calculateArea", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate area");
+            return errorResponse;
+        }
+    }
+
+    @RequestMapping(value = "/calculateHeat", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateHeat(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
+        try {
+            // Parsowanie JSON budynku
+            Building building = BuildingParser.parseJson(buildingJson);
+
+            double totalHeat = 0.0;
+
+            if (name != null && !name.isEmpty()) {
+                // Przeszukiwanie hierarchii w poszukiwaniu komponentu z dopasowanym name
+                Optional<BuildingComponent> foundComponent = findComponentByName(building, name);
+
+                if (foundComponent.isPresent()) {
+                    // Obliczamy powierzchnię dla znalezionego komponentu
+                    totalHeat = foundComponent.get().calculateHeat();
+                } else {
+                    // Jeśli komponent o danym name nie został znaleziony, zgłaszamy błąd
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("error", "Component with given name not found");
+                    return errorResponse;
+                }
+            } else {
+                // Jeśli nie podano name, obliczamy powierzchnię całego budynku
+                totalHeat = building.calculateHeat();
+            }
+
+            // Zaokrąglamy wynik do dwóch miejsc po przecinku
+            totalHeat = Math.round(totalHeat * 100.0) / 100.0;
+
+            // Przygotowanie odpowiedzi
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalHeat", totalHeat);
+            return response;
+
+        } catch (Exception e) {
+            logger.error("Error processing calculateHeat", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate heat");
+            return errorResponse;
         }
     }
 
     /**
-     * Zwraca powierzchnię pokoju o podanym identyfikatorze.
-     *
-     * @param roomId       identyfikator pokoju
-     * @param buildingJson dane budynku w formacie JSON
-     * @return mapa zawierająca powierzchnię pokoju lub komunikat błędu
+     * Rekurencyjna metoda pomocnicza do znajdowania komponentu po name w hierarchii budynku.
      */
-    @RequestMapping(value = "/roomArea/{roomId}", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> roomArea(@PathVariable("roomId") String roomId, @RequestBody String buildingJson) {
+
+    private Optional<BuildingComponent> findComponentByName(BuildingComponent component, String name) {
+        if (component.getName().equalsIgnoreCase(name)) {
+            return Optional.of(component);
+        }
+        for (BuildingComponent child : component.getComponents()) {
+            Optional<BuildingComponent> found = findComponentByName(child, name);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
+    }
+
+
+    @RequestMapping(value = "/highRoomHeating", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> highRoomHeating(@RequestBody String buildingJson, @RequestParam(value = "threshold", required = true) double threshold) {
         try {
-            // Parsing the building JSON
+            // Parsowanie JSON budynku
             Building building = BuildingParser.parseJson(buildingJson);
 
-            // Searching for the room with the given ID
-            Optional<Room> roomOptional = building.getLevels().stream()
-                    .flatMap(level -> level.getRooms().stream()) // Get all rooms from the levels
-                    .filter(room -> room.getId().equals(roomId))  // Filter by room ID
-                    .findFirst();                                // Get the first matching room (if any)
+            // Lista pomieszczeń przekraczających zadany próg zużycia energii cieplnej
+            List<Room> roomsExceedingThreshold = findRoomsExceedingHeatThreshold(building, threshold);
 
-            // If the room is found
-            if (roomOptional.isPresent()) {
-                Room room = roomOptional.get();
-                double roomArea = room.getArea(); // Get the area of the room
-
-                // Rounding the result to two decimal places
-                roomArea = Math.round(roomArea * 100.0) / 100.0;
-
-                // Preparing the response
-                Map<String, Object> response = new HashMap<>();
-                response.put("roomArea", roomArea);
-
-                return response; // The map will be automatically converted to JSON
-            } else {
-                // If the room with the given ID does not exist
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Room not found");
-                return errorResponse;
-            }
+            // Przygotowanie odpowiedzi
+            Map<String, Object> response = new HashMap<>();
+            response.put("roomsExceedingThreshold", roomsExceedingThreshold.stream()
+                    .map(room -> Map.of(
+                            "name", room.getName(),
+                            "cube", room.getCube(),
+                            "heating", room.getHeating(),
+                            "heatPerCube", Math.round((room.getHeating() / room.getCube() )* 100.0) / 100.0
+                    ))
+                    .collect(Collectors.toList())); // Konwertujemy listę pokoi do map JSON-owych
+            return response;
 
         } catch (Exception e) {
-            logger.error("Error processing roomArea", e);
+            logger.error("Error processing calculateHeat", e);
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to process roomArea");
+            errorResponse.put("error", "Failed to calculate heat");
             return errorResponse;
         }
     }
 
     /**
-     * Oblicza powierzchnię każdego poziomu budynku.
-     *
-     * @param buildingJson dane budynku w formacie JSON
-     * @return mapa zawierająca identyfikatory poziomów i ich powierzchnie
+     * Rekurencyjna metoda pomocnicza do znajdowania pomieszczeń przekraczających zadany próg zużycia energii cieplnej.
      */
-    @RequestMapping(value = "/levelArea", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> levelArea(@RequestBody String buildingJson) {
-        try {
-            // Parsing the building JSON
-            Building building = BuildingParser.parseJson(buildingJson);
+    private List<Room> findRoomsExceedingHeatThreshold(BuildingComponent component, double threshold) {
+        List<Room> roomsExceedingThreshold = new ArrayList<>();
 
-            // Calculating the total area for each level
-            Map<String, Double> levelArea = building.getLevels().stream()
-                    .collect(Collectors.toMap(
-                            Level::getId, // The key is the level ID
-                            level -> {
-                                // Summing up the areas of all rooms on the level
-                                double totalArea = level.getRooms().stream()
-                                        .mapToDouble(Room::getArea) // Get the area of each room
-                                        .sum();
-                                // Rounding to 2 decimal places
-                                return Math.round(totalArea * 100.0) / 100.0;
-                            }
-                    ));
-
-            // Preparing the response
-            Map<String, Object> response = new HashMap<>();
-            response.put("levelArea", levelArea);
-
-            return response;
-
-        } catch (Exception e) {
-            logger.error("Error processing levelArea", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to calculate level area");
-            return errorResponse;
-        }
-    }
-
-    @RequestMapping(value = "/buildingArea", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> buildingArea(@RequestBody String buildingJson) {
-        try {
-            // Parsing the building JSON
-            Building building = BuildingParser.parseJson(buildingJson);
-
-            // Calculating the total area for the building
-            double totalBuildingArea = building.getLevels().stream()
-                    .mapToDouble(level -> level.getRooms().stream()
-                            .mapToDouble(Room::getArea) // Get the area of each room in the level
-                            .sum())
-                    .sum();
-
-            // Rounding the total building area to 2 decimal places
-            totalBuildingArea = Math.round(totalBuildingArea * 100.0) / 100.0;
-
-            // Preparing the response
-            Map<String, Object> response = new HashMap<>();
-            response.put("totalBuildingArea", totalBuildingArea);
-
-            return response;
-
-        } catch (Exception e) {
-            logger.error("Error processing buildingArea", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to calculate building area");
-            return errorResponse;
-        }
-    }
-
-    @RequestMapping(value = "/roomHeating/{roomId}", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> roomHeating(@PathVariable("roomId") String roomId, @RequestBody String buildingJson) {
-        try {
-            // Parsing the building JSON
-            Building building = BuildingParser.parseJson(buildingJson);
-
-            // Searching for the room with the given ID
-            Optional<Room> roomOptional = building.getLevels().stream()
-                    .flatMap(level -> level.getRooms().stream()) // Get all rooms from the levels
-                    .filter(room -> room.getId().equals(roomId))  // Filter by room ID
-                    .findFirst();                                // Get the first matching room (if any)
-
-            // If the room is found
-            if (roomOptional.isPresent()) {
-                Room room = roomOptional.get();
-                double heatingPerCube = room.getCube() > 0 ? room.getHeating() / room.getCube() : 0.0; // Calculate heating per cubic meter
-
-                // Rounding the result to two decimal places
-                heatingPerCube = Math.round(heatingPerCube * 100.0) / 100.0;
-
-                // Preparing the response
-                Map<String, Object> response = new HashMap<>();
-                response.put("heatingPerCube", heatingPerCube);
-
-                return response; // The map will be automatically converted to JSON
-            } else {
-                // If the room with the given ID does not exist
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Room not found");
-                return errorResponse;
+        if (component instanceof Room) {
+            Room room = (Room) component;
+            double heatPerCube = room.getHeating() / room.getCube();
+            if (heatPerCube > threshold) {
+                roomsExceedingThreshold.add(room);
             }
-
-        } catch (Exception e) {
-            logger.error("Error processing roomHeating", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to process roomHeating");
-            return errorResponse;
+        } else {
+            for (BuildingComponent child : component.getComponents()) {
+                roomsExceedingThreshold.addAll(findRoomsExceedingHeatThreshold(child, threshold));
+            }
         }
-    }
 
-
-    @RequestMapping(value = "/roomHeatingPerLevel", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> roomHeatingPerLevel(@RequestBody String buildingJson) {
-        try {
-            // Parsing the building JSON
-            Building building = BuildingParser.parseJson(buildingJson);
-
-            // Calculating the average heating per cubic meter for each level
-            Map<String, Double> averageHeatingPerLevel = building.getLevels().stream()
-                    .collect(Collectors.toMap(
-                            Level::getId, // The key is the level ID
-                            level -> {
-                                // Calculating total heating and total volume
-                                double totalHeatingPerCube = level.getRooms().stream()
-                                        .mapToDouble(room -> room.getHeating() / room.getCube()) // Heating per cubic meter
-                                        .sum();
-                                double totalCube = level.getRooms().stream()
-                                        .mapToDouble(Room::getCube) // Total volume
-                                        .sum();
-
-                                // Calculating the average heating per cubic meter and rounding it to 2 decimal places
-                                double averageHeating = totalCube > 0 ? totalHeatingPerCube / level.getRooms().size() : 0.0;
-                                return Math.round(averageHeating * 100.0) / 100.0; // Rounding to 2 decimal places
-                            }
-                    ));
-
-            // Preparing the response
-            Map<String, Object> response = new HashMap<>();
-            response.put("averageHeatingPerLevel", averageHeatingPerLevel);
-
-            return response;
-
-        } catch (Exception e) {
-            logger.error("Error processing roomHeatingPerLevel", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to calculate average heating per level");
-            return errorResponse;
-        }
-    }
-
-
-    @RequestMapping(value = "/roomHeatingPerBuilding", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> roomHeatingPerBuilding(@RequestBody String buildingJson) {
-        try {
-            // Parsing the building JSON
-            Building building = BuildingParser.parseJson(buildingJson);
-
-            // Calculating total heating and total volume in the building
-            double totalHeatingPerCube = building.getLevels().stream()
-                    .flatMap(level -> level.getRooms().stream()) // Getting all rooms in the building
-                    .mapToDouble(room -> room.getHeating() / room.getCube()) // Heating per cubic meter for each room
-                    .sum();
-
-            double totalCube = building.getLevels().stream()
-                    .flatMap(level -> level.getRooms().stream()) // Getting all rooms in the building
-                    .mapToDouble(Room::getCube) // Total volume for each room
-                    .sum();
-
-            // Calculating the average heating per cubic meter for the entire building
-            double averageHeatingForBuilding = totalCube > 0 ? totalHeatingPerCube / building.getLevels().stream()
-                    .mapToDouble(level -> level.getRooms().size()).sum() : 0.0;
-
-            // Rounding the average heating per cubic meter to 2 decimal places
-            averageHeatingForBuilding = Math.round(averageHeatingForBuilding * 100.0) / 100.0;
-
-            // Preparing the response
-            Map<String, Object> response = new HashMap<>();
-            response.put("averageHeatingForBuilding", averageHeatingForBuilding);
-
-            return response;
-
-        } catch (Exception e) {
-            logger.error("Error processing roomHeatingPerBuilding", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Failed to calculate average heating for building");
-            return errorResponse;
-        }
+        return roomsExceedingThreshold;
     }
 
 }

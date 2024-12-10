@@ -1,87 +1,60 @@
 package pl.put.poznan.buildinginfo.logic.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Reprezentuje budynek, który składa się z jednego lub więcej poziomów.
- * Każdy budynek ma unikalne ID, nazwę oraz listę poziomów (pięter).
- *
- * @author Ahmen Osman
- * @version 1.0
- * @since 2024-11-25
- */
-public class Building {
-    private String id;
-    private String name;
-    private List<Level> levels;
+public class Building extends BuildingComponent {
+    private List<BuildingComponent> levels = new ArrayList<>();
 
-    /**
-     * Pobiera identyfikator budynku.
-     *
-     * @return identyfikator budynku w formie ciągu znaków
-     */
-    public String getId() {
-        return id;
+    public Building(String id, String name) {
+        super(id, name);
     }
 
-    /**
-     * Ustawia identyfikator budynku.
-     *
-     * @param id identyfikator budynku w formie ciągu znaków
-     */
-    public void setId(String id) {
-        this.id = id;
+    public void setLevels(List<Level> levels) {
+        for (Level level : levels) {
+            levels.add(level);  // Dodajemy poziom do komponentów budynku
+        }
     }
 
-    /**
-     * Pobiera nazwę budynku.
-     *
-     * @return nazwa budynku w formie ciągu znaków
-     */
-    public String getName() {
-        return name;
+
+    @Override
+    public void addComponent(BuildingComponent component) {
+        levels.add(component);
     }
 
-    /**
-     * Ustawia nazwę budynku.
-     *
-     * @param name nazwa budynku w formie ciągu znaków
-     */
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public void removeComponent(BuildingComponent component) {
+        levels.remove(component);
     }
 
-    /**
-     * Pobiera listę poziomów (pięter) w budynku.
-     *
-     * @return lista poziomów w budynku
-     */
-    public List<Level> getLevels() {
+    @Override
+    public List<BuildingComponent> getComponents() {
         return levels;
     }
 
-    /**
-     * Ustawia listę poziomów (pięter) w budynku.
-     *
-     * @param levels lista poziomów w budynku
-     */
-    public void setLevels(List<Level> levels) {
-        this.levels = levels;
+    @Override
+    public double calculateArea() {
+        return levels.stream()
+                .mapToDouble(BuildingComponent::calculateArea)
+                .sum();
     }
 
-    /**
-     * Zwraca reprezentację tekstową budynku, w tym jego identyfikator, nazwę oraz szczegóły poziomów.
-     *
-     * @return reprezentacja tekstowa budynku
-     */
+    @Override
+    public double calculateHeat() {
+        return levels.stream()
+                .mapToDouble(BuildingComponent::calculateHeat)
+                .sum();
+    }
+
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Building ID: ").append(id).append("\n");
-        sb.append("Name: ").append(name).append("\n");
-        sb.append("Levels:\n");
-        for (Level level : levels) {
-            sb.append(level.toString()).append("\n");
+        sb.append("Building ID: ").append(getId()).append("\n")
+                .append("Name: ").append(getName()).append("\n")
+                .append("Levels: \n");
+        for (BuildingComponent level : levels) {
+            sb.append("  ").append(level.toString()).append("\n");
         }
         return sb.toString();
     }

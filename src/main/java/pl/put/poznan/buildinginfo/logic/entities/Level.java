@@ -1,87 +1,58 @@
 package pl.put.poznan.buildinginfo.logic.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Reprezentuje poziom (piętro) w budynku.
- * Każdy poziom ma unikalne ID, nazwę oraz listę pomieszczeń znajdujących się na tym poziomie.
- *
- * @author Ahmen Osman
- * @version 1.0
- * @since 2024-11-25
- */
-public class Level {
-    private String id;
-    private String name;
-    private List<Room> rooms;
+public class Level extends BuildingComponent {
+    private List<BuildingComponent> rooms = new ArrayList<>();
 
-    /**
-     * Pobiera identyfikator poziomu.
-     *
-     * @return identyfikator poziomu w formie ciągu znaków
-     */
-    public String getId() {
-        return id;
+    public Level(String id, String name) {
+        super(id, name);
     }
 
-    /**
-     * Ustawia identyfikator poziomu.
-     *
-     * @param id identyfikator poziomu w formie ciągu znaków
-     */
-    public void setId(String id) {
-        this.id = id;
+    public void setRooms(List<Room> _rooms) {
+        for (Room room : _rooms) {
+            rooms.add(room);  // Dodajemy każdy pokój do komponentów
+        }
     }
 
-    /**
-     * Pobiera nazwę poziomu.
-     *
-     * @return nazwa poziomu w formie ciągu znaków
-     */
-    public String getName() {
-        return name;
+    @Override
+    public void addComponent(BuildingComponent component) {
+        rooms.add(component);
     }
 
-    /**
-     * Ustawia nazwę poziomu.
-     *
-     * @param name nazwa poziomu w formie ciągu znaków
-     */
-    public void setName(String name) {
-        this.name = name;
+    @Override
+    public void removeComponent(BuildingComponent component) {
+        rooms.remove(component);
     }
 
-    /**
-     * Pobiera listę pomieszczeń znajdujących się na tym poziomie.
-     *
-     * @return lista pomieszczeń na poziomie
-     */
-    public List<Room> getRooms() {
+    @Override
+    public List<BuildingComponent> getComponents() {
         return rooms;
     }
 
-    /**
-     * Ustawia listę pomieszczeń znajdujących się na tym poziomie.
-     *
-     * @param rooms lista pomieszczeń na poziomie
-     */
-    public void setRooms(List<Room> rooms) {
-        this.rooms = rooms;
+    @Override
+    public double calculateArea() {
+        return rooms.stream()
+                .mapToDouble(BuildingComponent::calculateArea)
+                .sum();
     }
 
-    /**
-     * Zwraca reprezentację tekstową poziomu, w tym jego identyfikator, nazwę oraz szczegóły pomieszczeń.
-     *
-     * @return reprezentacja tekstowa poziomu
-     */
+    @Override
+    public double calculateHeat() {
+        return rooms.stream()
+                .mapToDouble(BuildingComponent::calculateHeat)
+                .sum();
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("  Level ID: ").append(id).append("\n");
-        sb.append("  Name: ").append(name).append("\n");
-        sb.append("  Rooms:\n");
-        for (Room room : rooms) {
-            sb.append(room.toString()).append("\n");
+        sb.append("Level ID: ").append(getId()).append("\n")
+                .append("Name: ").append(getName()).append("\n")
+                .append("Rooms: \n");
+        for (BuildingComponent room : rooms) {
+            sb.append("  ").append(room.toString()).append("\n");
         }
         return sb.toString();
     }
