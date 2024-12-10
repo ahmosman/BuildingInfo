@@ -64,14 +64,14 @@
             </plugin>
 
 
-            <!-- Wtyczka generowania Javadoc -->
+            <!-- plugin for generating Javadoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.4.0</version>
                 <executions>
                     <execution>
-                        <!-- Faza, w której Javadoc ma być generowany -->
+                        <!-- Phase in which Javadoc is generating -->
                         <phase>compile</phase>
                         <goals>
                             <goal>javadoc</goal>
