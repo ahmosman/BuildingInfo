@@ -3,6 +3,7 @@ package pl.put.poznan.buildinginfo.rest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+import pl.put.poznan.buildinginfo.logic.BuildingFinder;
 import pl.put.poznan.buildinginfo.logic.BuildingParser;
 import pl.put.poznan.buildinginfo.logic.entities.Building;
 import pl.put.poznan.buildinginfo.logic.entities.BuildingComponent;
@@ -51,7 +52,7 @@ public class BuildingInfoController {
             Building building = BuildingParser.parseJson(buildingJson);
 
             double totalArea = name != null && !name.isEmpty()
-                    ? findComponentByName(building, name).map(BuildingComponent::calculateArea).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateArea).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateArea();
 
             totalArea = Math.round(totalArea * 100.0) / 100.0;
@@ -80,7 +81,7 @@ public class BuildingInfoController {
             Building building = BuildingParser.parseJson(buildingJson);
 
             double totalHeat = name != null && !name.isEmpty()
-                    ? findComponentByName(building, name).map(BuildingComponent::calculateHeat).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateHeat).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateHeat();
 
             totalHeat = Math.round(totalHeat * 100.0) / 100.0;
@@ -108,7 +109,7 @@ public class BuildingInfoController {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
 
-            List<Room> roomsExceedingThreshold = findRoomsExceedingHeatThreshold(building, threshold);
+            List<Room> roomsExceedingThreshold = BuildingFinder.findRoomsExceedingHeatThreshold(building, threshold);
 
             Map<String, Object> response = new HashMap<>();
             response.put("roomsExceedingThreshold", roomsExceedingThreshold.stream()
@@ -126,50 +127,5 @@ public class BuildingInfoController {
             errorResponse.put("error", "Failed to calculate heat");
             return errorResponse;
         }
-    }
-
-    /**
-     * Helper method to recursively find a component by name in the building hierarchy.
-     *
-     * @param component The root component to start the search
-     * @param name      The name of the component to find
-     * @return An {@link Optional} containing the component if found, otherwise empty
-     */
-    private Optional<BuildingComponent> findComponentByName(BuildingComponent component, String name) {
-        if (component.getName().equalsIgnoreCase(name)) {
-            return Optional.of(component);
-        }
-        for (BuildingComponent child : component.getComponents()) {
-            Optional<BuildingComponent> found = findComponentByName(child, name);
-            if (found.isPresent()) {
-                return found;
-            }
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Helper method to find rooms with heating per cubic meter exceeding a given threshold.
-     *
-     * @param component The root component to start the search
-     * @param threshold The heating threshold per cubic meter
-     * @return A list of rooms exceeding the threshold
-     */
-    private List<Room> findRoomsExceedingHeatThreshold(BuildingComponent component, double threshold) {
-        List<Room> roomsExceedingThreshold = new ArrayList<>();
-
-        if (component instanceof Room) {
-            Room room = (Room) component;
-            double heatPerCube = room.getHeating() / room.getCube();
-            if (heatPerCube > threshold) {
-                roomsExceedingThreshold.add(room);
-            }
-        } else {
-            for (BuildingComponent child : component.getComponents()) {
-                roomsExceedingThreshold.addAll(findRoomsExceedingHeatThreshold(child, threshold));
-            }
-        }
-
-        return roomsExceedingThreshold;
     }
 }
