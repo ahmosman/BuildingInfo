@@ -90,6 +90,12 @@ public class Building extends BuildingComponent {
                 .sum();
     }
 
+    @Override
+    public double calculateCube() {
+        return levels.stream()
+                .mapToDouble(BuildingComponent::calculateCube)
+                .sum();
+    }
     /**
      * Returns a string representation of the building, including its ID, name, and all levels.
      *

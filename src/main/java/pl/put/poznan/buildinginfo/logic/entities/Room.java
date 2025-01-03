@@ -49,6 +49,10 @@ public class Room extends BuildingComponent {
         return heating;
     }
 
+    public double calculateCube() {
+        return cube;
+    }
+
     /**
      * Gets the area of the room.
      *
