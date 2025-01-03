@@ -50,6 +50,24 @@ public class Room extends BuildingComponent {
     }
 
     /**
+     * Calculates and returns the cube demand of the room.
+     *
+     * @return the cube demand of the room
+     */
+    public double calculateCube() {
+        return cube;
+    }
+
+    /**
+     * Calculates and returns the lighting demand of the room.
+     *
+     * @return the lighting demand of the room
+     */
+    public double calculateLight() {
+        return light;
+    }
+
+    /**
      * Gets the area of the room.
      *
      * @return the area of the room in square meters
@@ -81,9 +99,7 @@ public class Room extends BuildingComponent {
      *
      * @return the lighting level of the room in lumens
      */
-    public float getLight() {
-        return light;
-    }
+    public float getLight() { return light; }
 
     /**
      * Returns a string representation of the room, including its ID, name, area, volume, heating, and lighting.

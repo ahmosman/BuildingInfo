@@ -91,6 +91,29 @@ public class Building extends BuildingComponent {
     }
 
     /**
+     * Calculates the total cube demand of the building by summing the cube demands of all levels.
+     *
+     * @return the total cube demand of the building
+     */
+    @Override
+    public double calculateCube() {
+        return levels.stream()
+                .mapToDouble(BuildingComponent::calculateCube)
+                .sum();
+    }
+
+    /**
+     * Calculates the total light demand of the building by summing the light demands of all levels.
+     *
+     * @return the total light demand of the building
+     */
+    @Override
+    public double calculateLight() {
+        return levels.stream()
+                .mapToDouble(BuildingComponent::calculateLight)
+                .sum();
+    }
+    /**
      * Returns a string representation of the building, including its ID, name, and all levels.
      *
      * @return a string describing the building

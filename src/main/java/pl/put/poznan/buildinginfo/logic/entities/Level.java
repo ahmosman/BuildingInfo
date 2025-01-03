@@ -91,6 +91,30 @@ public class Level extends BuildingComponent {
     }
 
     /**
+     * Calculates the cube heat demand of the level by summing the cube demands of all rooms.
+     *
+     * @return the cube heat demand of the level
+     */
+    @Override
+    public double calculateCube() {
+        return rooms.stream()
+                .mapToDouble(BuildingComponent::calculateCube)
+                .sum();
+    }
+
+    /**
+     * Calculates the total light demand of the level by summing the light demands of all rooms.
+     *
+     * @return the total light demand of the level
+     */
+    @Override
+    public double calculateLight() {
+        return rooms.stream()
+                .mapToDouble(BuildingComponent::calculateLight)
+                .sum();
+    }
+
+    /**
      * Returns a string representation of the level, including its ID, name, and all rooms.
      *
      * @return a string describing the level

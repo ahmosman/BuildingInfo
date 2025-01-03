@@ -3,10 +3,10 @@ package pl.put.poznan.buildinginfo.rest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+import pl.put.poznan.buildinginfo.logic.BuildingFinder;
 import pl.put.poznan.buildinginfo.logic.BuildingParser;
 import pl.put.poznan.buildinginfo.logic.entities.Building;
 import pl.put.poznan.buildinginfo.logic.entities.BuildingComponent;
-import pl.put.poznan.buildinginfo.logic.entities.Level;
 import pl.put.poznan.buildinginfo.logic.entities.Room;
 
 import java.util.*;
@@ -49,13 +49,10 @@ public class BuildingInfoController {
     public Map<String, Object> calculateArea(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
-
             double totalArea = name != null && !name.isEmpty()
-                    ? findComponentByName(building, name).map(BuildingComponent::calculateArea).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateArea).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateArea();
-
             totalArea = Math.round(totalArea * 100.0) / 100.0;
-
             Map<String, Object> response = new HashMap<>();
             response.put("totalArea", totalArea);
             return response;
@@ -78,13 +75,10 @@ public class BuildingInfoController {
     public Map<String, Object> calculateHeat(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
-
             double totalHeat = name != null && !name.isEmpty()
-                    ? findComponentByName(building, name).map(BuildingComponent::calculateHeat).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateHeat).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateHeat();
-
             totalHeat = Math.round(totalHeat * 100.0) / 100.0;
-
             Map<String, Object> response = new HashMap<>();
             response.put("totalHeat", totalHeat);
             return response;
@@ -107,9 +101,7 @@ public class BuildingInfoController {
     public Map<String, Object> highRoomHeating(@RequestBody String buildingJson, @RequestParam(value = "threshold") double threshold) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
-
-            List<Room> roomsExceedingThreshold = findRoomsExceedingHeatThreshold(building, threshold);
-
+            List<Room> roomsExceedingThreshold = BuildingFinder.findRoomsExceedingHeatThreshold(building, threshold);
             Map<String, Object> response = new HashMap<>();
             response.put("roomsExceedingThreshold", roomsExceedingThreshold.stream()
                     .map(room -> Map.of(
@@ -129,47 +121,150 @@ public class BuildingInfoController {
     }
 
     /**
-     * Helper method to recursively find a component by name in the building hierarchy.
+     * Endpoint to calculate the maximum number of people per area for a building or specific component.
      *
-     * @param component The root component to start the search
-     * @param name      The name of the component to find
-     * @return An {@link Optional} containing the component if found, otherwise empty
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate the metric for
+     * @return A map containing the total area and maximum number of people, or an error message
      */
-    private Optional<BuildingComponent> findComponentByName(BuildingComponent component, String name) {
-        if (component.getName().equalsIgnoreCase(name)) {
-            return Optional.of(component);
+    @RequestMapping(value = "/calculatePersonPerArea", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculatePersonPerArea(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
+        try {
+            Building building = BuildingParser.parseJson(buildingJson);
+            double totalArea = name != null && !name.isEmpty()
+                    ? BuildingFinder.findComponentByName(building, name)
+                    .map(BuildingComponent::calculateArea)
+                    .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    : building.calculateArea();
+            int maxPeople = (int) Math.floor(totalArea / 3.0);
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalArea", Math.round(totalArea * 100.0) / 100.0);
+            response.put("maxPeople", maxPeople);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculatePersonPerArea", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate person per area");
+            return errorResponse;
         }
-        for (BuildingComponent child : component.getComponents()) {
-            Optional<BuildingComponent> found = findComponentByName(child, name);
-            if (found.isPresent()) {
-                return found;
-            }
-        }
-        return Optional.empty();
     }
 
     /**
-     * Helper method to find rooms with heating per cubic meter exceeding a given threshold.
+     * Endpoint to calculate the total volume (cube) of a building or specific component.
      *
-     * @param component The root component to start the search
-     * @param threshold The heating threshold per cubic meter
-     * @return A list of rooms exceeding the threshold
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate the volume for
+     * @return A map containing the total volume or an error message
      */
-    private List<Room> findRoomsExceedingHeatThreshold(BuildingComponent component, double threshold) {
-        List<Room> roomsExceedingThreshold = new ArrayList<>();
-
-        if (component instanceof Room) {
-            Room room = (Room) component;
-            double heatPerCube = room.getHeating() / room.getCube();
-            if (heatPerCube > threshold) {
-                roomsExceedingThreshold.add(room);
-            }
-        } else {
-            for (BuildingComponent child : component.getComponents()) {
-                roomsExceedingThreshold.addAll(findRoomsExceedingHeatThreshold(child, threshold));
-            }
+    @RequestMapping(value = "/calculateCube", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateCube(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
+        try {
+            Building building = BuildingParser.parseJson(buildingJson);
+            double totalCube = name != null && !name.isEmpty()
+                    ? BuildingFinder.findComponentByName(building, name)
+                    .map(BuildingComponent::calculateCube)
+                    .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    : building.calculateCube();
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalCube", Math.round(totalCube * 100.0) / 100.0);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculateCube", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate cube");
+            return errorResponse;
         }
+    }
 
-        return roomsExceedingThreshold;
+    /**
+     * Endpoint to calculate the required number of restrooms based on the area and occupancy.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate for
+     * @return A map containing the required number of restrooms or an error message
+     */
+    @RequestMapping(value = "/calculateRestrooms", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateRestrooms(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
+        try {
+            Building building = BuildingParser.parseJson(buildingJson);
+            Map<String, Object> personPerAreaResponse = calculatePersonPerArea(buildingJson, name);
+            if (personPerAreaResponse.containsKey("error")) {
+                throw new IllegalArgumentException((String) personPerAreaResponse.get("error"));
+            }
+            int maxPeople = (int) personPerAreaResponse.get("maxPeople");
+            int restrooms = (int) Math.ceil(maxPeople / 15.0);
+            Map<String, Object> response = new HashMap<>();
+            response.put("maxPeople", maxPeople);
+            response.put("requiredRestrooms", restrooms);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculateRestrooms", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate restrooms");
+            return errorResponse;
+        }
+    }
+
+    /**
+     * Endpoint to calculate the total lighting demand of a building or specific component.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate the lighting for
+     * @return A map containing the total lighting or an error message
+     */
+    @RequestMapping(value = "/calculateTotalLight", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateTotalLight(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
+        try {
+            Building building = BuildingParser.parseJson(buildingJson);
+            double totalLight = name != null && !name.isEmpty()
+                    ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateLight).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    : building.calculateLight();
+            totalLight = Math.round(totalLight * 100.0) / 100.0;
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalLight", totalLight);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculateTotalLight", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate total light");
+            return errorResponse;
+        }
+    }
+
+    /**
+     * Endpoint to calculate the lighting per unit area of a building or specific component.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate for
+     * @return A map containing the lighting per area or an error message
+     */
+    @RequestMapping(value = "/calculateLighting", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateLighting(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
+        try {
+            Building building = BuildingParser.parseJson(buildingJson);
+            double lightingPerArea;
+            if (name != null && !name.isEmpty()) {
+                BuildingComponent component = BuildingFinder.findComponentByName(building, name)
+                        .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"));
+                lightingPerArea = component.calculateLight() / component.calculateArea();
+            } else {
+                Map<String, Object> totalLightResponse = calculateTotalLight(buildingJson, null);
+                if (totalLightResponse.containsKey("error")) {
+                    throw new IllegalArgumentException((String) totalLightResponse.get("error"));
+                }
+                double totalLight = (double) totalLightResponse.get("totalLight");
+                double totalArea = building.calculateArea();
+                lightingPerArea = totalLight / totalArea;
+            }
+            lightingPerArea = Math.round(lightingPerArea * 100.0) / 100.0;
+            Map<String, Object> response = new HashMap<>();
+            response.put("lightingPerArea", lightingPerArea);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculateLighting", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate lighting per area");
+            return errorResponse;
+        }
     }
 }
