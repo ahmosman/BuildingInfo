@@ -14,10 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit tests for the {@link BuildingInfoController} class, testing various methods for calculating area, heat,
- * and rooms exceeding a specific heat threshold.
+ * light, cube, person per area, restrooms, and lighting.
  */
 public class BuildingInfoControllerTest {
-
     private BuildingInfoController controller;
     private String jsonInput;
 
@@ -27,7 +26,7 @@ public class BuildingInfoControllerTest {
      * the building's structure.
      */
     @BeforeEach
-    void setUp(){
+    void setUp() {
         controller = Mockito.spy(new BuildingInfoController());
         jsonInput = "{\n" +
                 "  \"id\": \"building1\",\n" +
@@ -73,46 +72,32 @@ public class BuildingInfoControllerTest {
                 "}";
     }
 
-    /**
-     * Tests the {@link BuildingInfoController#calculateArea(String, String)} method.
-     * Verifies that the method correctly calculates the total area for a given floor.
-     */
     @Test
     void testCalculateArea() throws Exception {
-        // Mocking the calculateArea() method to return the correct area.
         assertEquals(80.0, controller.calculateArea(jsonInput, "Ground Floor").get("totalArea"));
     }
 
-    /**
-     * Tests the {@link BuildingInfoController#calculateHeat(String, String)} method.
-     * Verifies that the method correctly calculates the total heating for the building.
-     */
     @Test
-    void testCalculateHeat() throws Exception {
-        // Mocking the calculateHeat() method to return the correct total heat value.
+    void testCalculateHeatBuilding() throws Exception {
         assertEquals(45.5, controller.calculateHeat(jsonInput, "Main Office").get("totalHeat"));
     }
 
-    /**
-     * Tests the {@link BuildingInfoController#highRoomHeating(String, double)} method.
-     * Verifies that the method correctly identifies rooms exceeding a given heating threshold.
-     */
     @Test
-    void highRoomHeating() throws Exception {
-        // Expected result (with ordered keys)
+    void testCalculateHeatRoom() throws Exception {
+        assertEquals(10.0, controller.calculateHeat(jsonInput, "Office 201").get("totalHeat"));
+    }
+
+    @Test
+    void testHighRoomHeating() throws Exception {
         String expectedRoomsExceedingThreshold =
                 "[{cube=150.0, heatPerCube=0.14, heating=20.5, name=Conference Room}, " +
                         "{cube=90.0, heatPerCube=0.17, heating=15.0, name=Office 101}, " +
                         "{cube=75.0, heatPerCube=0.13, heating=10.0, name=Office 201}]";
 
-        // Result returned by the method
         List<Map<String, Object>> roomsExceedingThreshold =
                 (List<Map<String, Object>>) controller.highRoomHeating(jsonInput, 0.11).get("roomsExceedingThreshold");
-
-        // Sorting the list by "name" key for deterministic order
         roomsExceedingThreshold.sort(Comparator.comparing(room -> room.get("name").toString()));
 
-        // Reordering the keys in each map
         List<Map<String, Object>> orderedRoomsExceedingThreshold = roomsExceedingThreshold.stream()
                 .map(room -> {
                     Map<String, Object> orderedMap = new LinkedHashMap<>();
@@ -124,10 +109,79 @@ public class BuildingInfoControllerTest {
                 })
                 .collect(Collectors.toList());
 
-        // Converting the result to a String
         String actualRoomsExceedingThreshold = orderedRoomsExceedingThreshold.toString();
-
-        // Comparing the expected and actual results
         assertEquals(expectedRoomsExceedingThreshold, actualRoomsExceedingThreshold);
     }
+
+    @Test
+    void testCalculatePersonPerAreaLevel() throws Exception {
+        Map<String, Object> response = controller.calculatePersonPerArea(jsonInput, "Ground Floor");
+        assertEquals(80.0, response.get("totalArea"));
+        assertEquals(26, response.get("maxPeople"));
+    }
+
+    @Test
+    void testCalculatePersonPerAreaBuilding() throws Exception {
+        Map<String, Object> response = controller.calculatePersonPerArea(jsonInput, "Main Office");
+        assertEquals(105.0, response.get("totalArea"));
+        assertEquals(35, response.get("maxPeople"));
+    }
+
+    @Test
+    void testCalculateCubeBuilding() throws Exception {
+        Map<String, Object> response = controller.calculateCube(jsonInput, "Main Office");
+        assertEquals(315.0, response.get("totalCube"));
+    }
+
+    @Test
+    void testCalculateCubeLevel() throws Exception {
+        Map<String, Object> response = controller.calculateCube(jsonInput, "Ground Floor");
+        assertEquals(240.0, response.get("totalCube"));
+    }
+
+    @Test
+    void testCalculateCubeRoom() throws Exception {
+        Map<String, Object> response = controller.calculateCube(jsonInput, "Office 201");
+        assertEquals(75.0, response.get("totalCube"));
+    }
+
+    @Test
+    void testCalculateRestroomsBuilding() throws Exception {
+        Map<String, Object> response = controller.calculateRestrooms(jsonInput, "Main Office");
+        assertEquals(35, response.get("maxPeople"));
+        assertEquals(3, response.get("requiredRestrooms"));
+    }
+
+    @Test
+    void testCalculateRestroomsLevel() throws Exception {
+        Map<String, Object> response = controller.calculateRestrooms(jsonInput, "Ground Floor");
+        assertEquals(26, response.get("maxPeople"));
+        assertEquals(2, response.get("requiredRestrooms"));
+    }
+
+
+    @Test
+    void testCalculateTotalLightLevel() throws Exception {
+        Map<String, Object> response = controller.calculateTotalLight(jsonInput, "Ground Floor");
+        assertEquals(500.0, response.get("totalLight"));
+    }
+
+
+    @Test
+    void testCalculateTotalLight() throws Exception {
+        Map<String, Object> response = controller.calculateTotalLight(jsonInput, null);
+        assertEquals(650.0, response.get("totalLight"));
+    }
+
+    @Test
+    void testCalculateLightingRoom() throws Exception {
+        Map<String, Object> response = controller.calculateLighting(jsonInput, "Office 101");
+        assertEquals(6.67, response.get("lightingPerArea"));
+    }
+    @Test
+    void testCalculateLighting() throws Exception {
+        Map<String, Object> response = controller.calculateLighting(jsonInput, null);
+        assertEquals(6.19, response.get("lightingPerArea"));
+    }
 }
+
