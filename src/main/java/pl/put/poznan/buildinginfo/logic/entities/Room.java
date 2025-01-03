@@ -53,6 +53,10 @@ public class Room extends BuildingComponent {
         return cube;
     }
 
+    public double calculateLight() {
+        return light;
+    }
+
     /**
      * Gets the area of the room.
      *
@@ -85,9 +89,7 @@ public class Room extends BuildingComponent {
      *
      * @return the lighting level of the room in lumens
      */
-    public float getLight() {
-        return light;
-    }
+    public float getLight() { return light; }
 
     /**
      * Returns a string representation of the room, including its ID, name, area, volume, heating, and lighting.

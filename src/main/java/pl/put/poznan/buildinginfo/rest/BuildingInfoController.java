@@ -216,4 +216,64 @@ public class BuildingInfoController {
         }
     }
 
+    @RequestMapping(value = "/calculateTotalLight", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateTotalLight(@RequestBody String buildingJson,
+                                                   @RequestParam(value = "name", required = false) String name) {
+        try {
+            Building building = BuildingParser.parseJson(buildingJson);
+            double totalLight = name != null && !name.isEmpty()
+                    ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateLight).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    : building.calculateLight();
+            totalLight = Math.round(totalLight * 100.0) / 100.0;
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalLight", totalLight);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculateTotalLight", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate total light");
+            return errorResponse;
+        }
+    }
+
+    @RequestMapping(value = "/calculateLighting", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateLighting(@RequestBody String buildingJson,
+                                                 @RequestParam(value = "name", required = false) String name) {
+        try {
+
+            Building building = BuildingParser.parseJson(buildingJson);
+
+            double lightingPerArea;
+
+            if (name != null && !name.isEmpty()) {
+
+                BuildingComponent component = BuildingFinder.findComponentByName(building, name)
+                        .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"));
+                lightingPerArea = component.calculateLight() / component.calculateArea();
+            } else {
+
+                Map<String, Object> totalLightResponse = calculateTotalLight(buildingJson, null);
+                if (totalLightResponse.containsKey("error")) {
+                    throw new IllegalArgumentException((String) totalLightResponse.get("error"));
+                }
+                double totalLight = (double) totalLightResponse.get("totalLight");
+                double totalArea = building.calculateArea();
+                lightingPerArea = totalLight / totalArea;
+            }
+
+            lightingPerArea = Math.round(lightingPerArea * 100.0) / 100.0;
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("lightingPerArea", lightingPerArea);
+            return response;
+        } catch (Exception e) {
+            logger.error("Error processing calculateLighting", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate lighting per area");
+            return errorResponse;
+        }
+    }
+
+
+
 }

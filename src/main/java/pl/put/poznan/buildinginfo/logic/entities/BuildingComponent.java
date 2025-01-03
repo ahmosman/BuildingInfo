@@ -59,6 +59,8 @@ public abstract class BuildingComponent {
 
     public abstract double calculateCube();
 
+    public abstract double calculateLight();
+
     /**
      * Adds a subcomponent to this building component.
      * By default, this operation is unsupported and will throw an exception.
