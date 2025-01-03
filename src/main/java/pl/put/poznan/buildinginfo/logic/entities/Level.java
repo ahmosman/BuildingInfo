@@ -97,6 +97,13 @@ public class Level extends BuildingComponent {
                 .sum();
     }
 
+    @Override
+    public double calculateLight() {
+        return rooms.stream()
+                .mapToDouble(BuildingComponent::calculateLight)
+                .sum();
+    }
+
     /**
      * Returns a string representation of the level, including its ID, name, and all rooms.
      *
