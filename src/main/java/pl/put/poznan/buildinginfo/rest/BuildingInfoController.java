@@ -157,4 +157,33 @@ public class BuildingInfoController {
         }
     }
 
+    @RequestMapping(value = "/calculateCube", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateCube(@RequestBody String buildingJson,
+                                             @RequestParam(value = "name", required = false) String name) {
+        try {
+
+            Building building = BuildingParser.parseJson(buildingJson);
+
+
+
+            // Obliczamy kubaturę dla wybranego komponentu lub całego budynku
+            double totalCube = name != null && !name.isEmpty()
+                    ? BuildingFinder.findComponentByName(building, name)
+                    .map(BuildingComponent::calculateCube)
+                    .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    : building.calculateCube();
+
+            // Tworzymy odpowiedź
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalCube", Math.round(totalCube * 100.0) / 100.0);
+            return response;
+        } catch (Exception e) {
+            // Obsługa błędów
+            logger.error("Error processing calculateCube", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate cube");
+            return errorResponse;
+        }
+    }
+
 }
