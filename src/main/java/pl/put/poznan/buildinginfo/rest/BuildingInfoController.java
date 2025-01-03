@@ -166,22 +166,52 @@ public class BuildingInfoController {
 
 
 
-            // Obliczamy kubaturę dla wybranego komponentu lub całego budynku
+
             double totalCube = name != null && !name.isEmpty()
                     ? BuildingFinder.findComponentByName(building, name)
                     .map(BuildingComponent::calculateCube)
                     .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateCube();
 
-            // Tworzymy odpowiedź
+
             Map<String, Object> response = new HashMap<>();
             response.put("totalCube", Math.round(totalCube * 100.0) / 100.0);
             return response;
         } catch (Exception e) {
-            // Obsługa błędów
+
             logger.error("Error processing calculateCube", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to calculate cube");
+            return errorResponse;
+        }
+    }
+
+    @RequestMapping(value = "/calculateRestrooms", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculateRestrooms(@RequestBody String buildingJson,
+                                                  @RequestParam(value = "name", required = false) String name) {
+        try {
+
+            Building building = BuildingParser.parseJson(buildingJson);
+
+            Map<String, Object> personPerAreaResponse = calculatePersonPerArea(buildingJson, name);
+
+            if (personPerAreaResponse.containsKey("error")) {
+                throw new IllegalArgumentException((String) personPerAreaResponse.get("error"));
+            }
+
+            int maxPeople = (int) personPerAreaResponse.get("maxPeople");
+
+            int restrooms = (int) Math.ceil(maxPeople / 15.0);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("maxPeople", maxPeople);
+            response.put("requiredRestrooms", restrooms);
+            return response;
+        } catch (Exception e) {
+
+            logger.error("Error processing calculateRestrooms", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate restrooms");
             return errorResponse;
         }
     }
