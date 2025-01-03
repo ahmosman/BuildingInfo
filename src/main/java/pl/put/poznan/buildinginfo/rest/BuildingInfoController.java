@@ -128,4 +128,33 @@ public class BuildingInfoController {
             return errorResponse;
         }
     }
+
+    @RequestMapping(value = "/calculatePersonPerArea", method = RequestMethod.POST, produces = "application/json")
+    public Map<String, Object> calculatePersonPerArea(@RequestBody String buildingJson,
+                                                      @RequestParam(value = "name", required = false) String name) {
+        try {
+
+            Building building = BuildingParser.parseJson(buildingJson);
+
+            double totalArea = name != null && !name.isEmpty()
+                    ? BuildingFinder.findComponentByName(building, name)
+                    .map(BuildingComponent::calculateArea)
+                    .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
+                    : building.calculateArea();
+
+            int maxPeople = (int) Math.floor(totalArea / 3.0);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("totalArea", Math.round(totalArea * 100.0) / 100.0);
+            response.put("maxPeople", maxPeople);
+            return response;
+        } catch (Exception e) {
+
+            logger.error("Error processing calculatePersonPerArea", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to calculate person per area");
+            return errorResponse;
+        }
+    }
+
 }
