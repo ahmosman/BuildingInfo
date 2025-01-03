@@ -7,7 +7,6 @@ import pl.put.poznan.buildinginfo.logic.BuildingFinder;
 import pl.put.poznan.buildinginfo.logic.BuildingParser;
 import pl.put.poznan.buildinginfo.logic.entities.Building;
 import pl.put.poznan.buildinginfo.logic.entities.BuildingComponent;
-import pl.put.poznan.buildinginfo.logic.entities.Level;
 import pl.put.poznan.buildinginfo.logic.entities.Room;
 
 import java.util.*;
@@ -50,13 +49,10 @@ public class BuildingInfoController {
     public Map<String, Object> calculateArea(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
-
             double totalArea = name != null && !name.isEmpty()
                     ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateArea).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateArea();
-
             totalArea = Math.round(totalArea * 100.0) / 100.0;
-
             Map<String, Object> response = new HashMap<>();
             response.put("totalArea", totalArea);
             return response;
@@ -79,13 +75,10 @@ public class BuildingInfoController {
     public Map<String, Object> calculateHeat(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
-
             double totalHeat = name != null && !name.isEmpty()
                     ? BuildingFinder.findComponentByName(building, name).map(BuildingComponent::calculateHeat).orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateHeat();
-
             totalHeat = Math.round(totalHeat * 100.0) / 100.0;
-
             Map<String, Object> response = new HashMap<>();
             response.put("totalHeat", totalHeat);
             return response;
@@ -108,9 +101,7 @@ public class BuildingInfoController {
     public Map<String, Object> highRoomHeating(@RequestBody String buildingJson, @RequestParam(value = "threshold") double threshold) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
-
             List<Room> roomsExceedingThreshold = BuildingFinder.findRoomsExceedingHeatThreshold(building, threshold);
-
             Map<String, Object> response = new HashMap<>();
             response.put("roomsExceedingThreshold", roomsExceedingThreshold.stream()
                     .map(room -> Map.of(
@@ -129,27 +120,28 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Endpoint to calculate the maximum number of people per area for a building or specific component.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate the metric for
+     * @return A map containing the total area and maximum number of people, or an error message
+     */
     @RequestMapping(value = "/calculatePersonPerArea", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> calculatePersonPerArea(@RequestBody String buildingJson,
-                                                      @RequestParam(value = "name", required = false) String name) {
+    public Map<String, Object> calculatePersonPerArea(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
-
             Building building = BuildingParser.parseJson(buildingJson);
-
             double totalArea = name != null && !name.isEmpty()
                     ? BuildingFinder.findComponentByName(building, name)
                     .map(BuildingComponent::calculateArea)
                     .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateArea();
-
             int maxPeople = (int) Math.floor(totalArea / 3.0);
-
             Map<String, Object> response = new HashMap<>();
             response.put("totalArea", Math.round(totalArea * 100.0) / 100.0);
             response.put("maxPeople", maxPeople);
             return response;
         } catch (Exception e) {
-
             logger.error("Error processing calculatePersonPerArea", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to calculate person per area");
@@ -157,28 +149,26 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Endpoint to calculate the total volume (cube) of a building or specific component.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate the volume for
+     * @return A map containing the total volume or an error message
+     */
     @RequestMapping(value = "/calculateCube", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> calculateCube(@RequestBody String buildingJson,
-                                             @RequestParam(value = "name", required = false) String name) {
+    public Map<String, Object> calculateCube(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
-
             Building building = BuildingParser.parseJson(buildingJson);
-
-
-
-
             double totalCube = name != null && !name.isEmpty()
                     ? BuildingFinder.findComponentByName(building, name)
                     .map(BuildingComponent::calculateCube)
                     .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"))
                     : building.calculateCube();
-
-
             Map<String, Object> response = new HashMap<>();
             response.put("totalCube", Math.round(totalCube * 100.0) / 100.0);
             return response;
         } catch (Exception e) {
-
             logger.error("Error processing calculateCube", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to calculate cube");
@@ -186,29 +176,28 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Endpoint to calculate the required number of restrooms based on the area and occupancy.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate for
+     * @return A map containing the required number of restrooms or an error message
+     */
     @RequestMapping(value = "/calculateRestrooms", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> calculateRestrooms(@RequestBody String buildingJson,
-                                                  @RequestParam(value = "name", required = false) String name) {
+    public Map<String, Object> calculateRestrooms(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
-
             Building building = BuildingParser.parseJson(buildingJson);
-
             Map<String, Object> personPerAreaResponse = calculatePersonPerArea(buildingJson, name);
-
             if (personPerAreaResponse.containsKey("error")) {
                 throw new IllegalArgumentException((String) personPerAreaResponse.get("error"));
             }
-
             int maxPeople = (int) personPerAreaResponse.get("maxPeople");
-
             int restrooms = (int) Math.ceil(maxPeople / 15.0);
-
             Map<String, Object> response = new HashMap<>();
             response.put("maxPeople", maxPeople);
             response.put("requiredRestrooms", restrooms);
             return response;
         } catch (Exception e) {
-
             logger.error("Error processing calculateRestrooms", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to calculate restrooms");
@@ -216,9 +205,15 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Endpoint to calculate the total lighting demand of a building or specific component.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate the lighting for
+     * @return A map containing the total lighting or an error message
+     */
     @RequestMapping(value = "/calculateTotalLight", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> calculateTotalLight(@RequestBody String buildingJson,
-                                                   @RequestParam(value = "name", required = false) String name) {
+    public Map<String, Object> calculateTotalLight(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
             Building building = BuildingParser.parseJson(buildingJson);
             double totalLight = name != null && !name.isEmpty()
@@ -236,22 +231,23 @@ public class BuildingInfoController {
         }
     }
 
+    /**
+     * Endpoint to calculate the lighting per unit area of a building or specific component.
+     *
+     * @param buildingJson JSON string representing the building structure
+     * @param name         (Optional) Name of the specific component to calculate for
+     * @return A map containing the lighting per area or an error message
+     */
     @RequestMapping(value = "/calculateLighting", method = RequestMethod.POST, produces = "application/json")
-    public Map<String, Object> calculateLighting(@RequestBody String buildingJson,
-                                                 @RequestParam(value = "name", required = false) String name) {
+    public Map<String, Object> calculateLighting(@RequestBody String buildingJson, @RequestParam(value = "name", required = false) String name) {
         try {
-
             Building building = BuildingParser.parseJson(buildingJson);
-
             double lightingPerArea;
-
             if (name != null && !name.isEmpty()) {
-
                 BuildingComponent component = BuildingFinder.findComponentByName(building, name)
                         .orElseThrow(() -> new IllegalArgumentException("Component with given name not found"));
                 lightingPerArea = component.calculateLight() / component.calculateArea();
             } else {
-
                 Map<String, Object> totalLightResponse = calculateTotalLight(buildingJson, null);
                 if (totalLightResponse.containsKey("error")) {
                     throw new IllegalArgumentException((String) totalLightResponse.get("error"));
@@ -260,9 +256,7 @@ public class BuildingInfoController {
                 double totalArea = building.calculateArea();
                 lightingPerArea = totalLight / totalArea;
             }
-
             lightingPerArea = Math.round(lightingPerArea * 100.0) / 100.0;
-
             Map<String, Object> response = new HashMap<>();
             response.put("lightingPerArea", lightingPerArea);
             return response;
@@ -273,7 +267,4 @@ public class BuildingInfoController {
             return errorResponse;
         }
     }
-
-
-
 }
