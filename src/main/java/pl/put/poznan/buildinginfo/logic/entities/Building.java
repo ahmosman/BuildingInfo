@@ -90,6 +90,11 @@ public class Building extends BuildingComponent {
                 .sum();
     }
 
+    /**
+     * Calculates the total cube demand of the building by summing the cube demands of all levels.
+     *
+     * @return the total cube demand of the building
+     */
     @Override
     public double calculateCube() {
         return levels.stream()
@@ -97,6 +102,11 @@ public class Building extends BuildingComponent {
                 .sum();
     }
 
+    /**
+     * Calculates the total light demand of the building by summing the light demands of all levels.
+     *
+     * @return the total light demand of the building
+     */
     @Override
     public double calculateLight() {
         return levels.stream()

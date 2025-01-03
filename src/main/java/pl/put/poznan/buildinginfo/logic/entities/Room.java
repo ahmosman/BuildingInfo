@@ -49,10 +49,20 @@ public class Room extends BuildingComponent {
         return heating;
     }
 
+    /**
+     * Calculates and returns the cube demand of the room.
+     *
+     * @return the cube demand of the room
+     */
     public double calculateCube() {
         return cube;
     }
 
+    /**
+     * Calculates and returns the lighting demand of the room.
+     *
+     * @return the lighting demand of the room
+     */
     public double calculateLight() {
         return light;
     }

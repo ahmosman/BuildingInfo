@@ -57,8 +57,20 @@ public abstract class BuildingComponent {
     public abstract double calculateHeat();
 
 
+    /**
+     * Calculates the cube demand of the building component.
+     * This method must be implemented in subclasses.
+     *
+     * @return the cube demand of the component
+     */
     public abstract double calculateCube();
 
+    /**
+     * Calculates the light demand of the building component.
+     * This method must be implemented in subclasses.
+     *
+     * @return the light demand of the component
+     */
     public abstract double calculateLight();
 
     /**
